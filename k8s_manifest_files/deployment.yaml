@@ -1,0 +1,48 @@
+apiVersion: apps/v1
+kind: Deployment
+metadata:
+  name: file-checker
+  namespace: file-checker-app
+  labels:
+    app: file-checker
+spec:
+  replicas: 2
+  selector:
+    matchLabels:
+      app: file-checker
+  template:
+    metadata:
+      labels:
+        app: file-checker
+    spec:
+      serviceAccountName: file-checker-sa
+      containers:
+        - name: file-checker
+          image: <ECR_URI>:latest
+          ports:
+            - containerPort: 3000
+          env:
+            - name: BUCKET_NAME
+              valueFrom:
+                secretKeyRef:
+                  name: file-checker-secrets
+                  key: BUCKET_NAME
+            - name: AWS_REGION
+              value: "eu-north-1"
+          resources:
+            requests:
+              cpu: "100m"
+              memory: "128Mi"
+            limits:
+              cpu: "300m"
+              memory: "256Mi"
+---
+apiVersion: v1
+kind: Secret
+metadata:
+  name: file-checker-secrets
+  namespace: file-checker-app
+type: Opaque
+stringData:
+  BUCKET_NAME: "<S3_BUCKET_NAME_FROM_PIPELINE>"
+
